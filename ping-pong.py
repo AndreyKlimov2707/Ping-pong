@@ -1,5 +1,6 @@
 from pygame import *
 from random import randint
+from time import time as timer
 
 class Game_sprite(sprite.Sprite):
     def __init__(self, sprite_image, x, y, width, height, speed):
@@ -60,10 +61,16 @@ else:
 
 font.init()
 font1 = font.Font(None, 70)
+score1 = 0
+score2 = 0
+score_label = font1.render(str(score1) + ':' + str(score2), None, (250, 250, 250))
+goal_label = font1.render('Гол!', None, (250, 250, 250))
 
 
+last_goal_time = 0
 game = True
 end = False
+new_goal = True
 clock = time.Clock()
 while game:
     if not end:
@@ -73,21 +80,58 @@ while game:
         racket2.reset()
         racket2.update(K_UP, K_DOWN)
         ball.reset()
-        move_ball()
+        window.blit(score_label, (300, 0))
         if sprite.collide_rect(rakcet1, ball):
             ball_direction1 = 'right'
         if sprite.collide_rect(ball, racket2):
             ball_direction1 = 'left'
 
-        if ball.rect.x <= 0:
+
+        if score1 > 2:
+            end_label = font1.render('Игрок 1 победил!', None, (250, 0, 0))
             end = True
-            end_label = font1.render('Игрок 2 победил!', None, (0, 250, 0))
+            last_goal_time = 0
+        if score2 > 2:
+            end_label = font1.render('Игрок 2 победил!', None, (0, 0, 250))
+            end = True
+            last_goal_time = 0
+
+        if timer() - last_goal_time > 3:
+            if new_goal:
+                new_goal = False
+                if randint(0, 1) == 0:
+                    ball_direction1 = 'left'
+                else:
+                    ball_direction1 = 'right'
+                if randint(0, 1) == 0:
+                    ball_direction2 = 'up'
+                else:
+                    ball_direction2 = 'down'
+                ball.speed = 5
+            move_ball()
+        else:
+            window.blit(goal_label, (300, 225))
+
+        if ball.rect.x <= -41:
+            score2 += 1
+            ball.speed = 0
+            new_goal = True
+            last_goal_time = timer()
+            ball.rect.x = 425
+            ball.rect.y = 325
+            score_label = font1.render(str(score1) + ':' + str(score2), None, (250, 250, 250))
+            
         if ball.rect.x >= 700:
-            end = True
-            end_label = font1.render('Игрок 1 победил!', None, (0, 250, 0))
+            score1 += 1
+            ball.speed = 0
+            new_goal = True
+            last_goal_time = timer()
+            ball.rect.x = 425
+            ball.rect.y = 325
+            score_label = font1.render(str(score1) + ':' + str(score2), None, (250, 250, 250))
 
     if end:
-        window.blit(end_label, (250, 250))
+        window.blit(end_label, (150, 225))
 
     for e in event.get():
         if e.type == QUIT:
